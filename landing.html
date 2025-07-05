@@ -1,0 +1,39 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Disaster Management Portal</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-200 via-sky-100 to-pink-100">
+
+  <div class="bg-white shadow-2xl rounded-2xl px-10 py-12 max-w-md w-full text-center">
+    <h1 class="text-3xl font-bold text-indigo-800 mb-4">🌐 Disaster Management Portal</h1>
+    <p class="text-gray-600 mb-8 text-sm">Access services for emergencies, admin alerts, and user SOS</p>
+
+    <div class="space-y-4">
+      <!-- Register Button -->
+      <button onclick="window.location.href='register.html'"
+        class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg">
+        👤 Register as Normal User
+      </button>
+
+      <!-- Login as User -->
+      <button onclick="window.location.href='login.html'"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg">
+        👥 Login as User
+      </button>
+
+      <!-- Login as Admin -->
+      <button onclick="window.location.href='admin-login.html'"
+        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg">
+        🔐 Login as Admin
+      </button>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-6">© 2025 Disaster Management System</p>
+  </div>
+
+</body>
+</html>

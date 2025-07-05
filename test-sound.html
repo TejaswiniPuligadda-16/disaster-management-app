@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sound Test</title>
+</head>
+<body>
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+  <button onclick="playAlertSound()">Play SOS Sound</button>
+
+  <script>
+    function playAlertSound() {
+      const audio = document.getElementById("alertSound");
+      if (!audio) return;
+
+      audio.pause();
+      audio.currentTime = 0;
+      audio.play().then(() => {
+        console.log("Sound started");
+        setTimeout(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          console.log("Sound stopped after 2s");
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
+

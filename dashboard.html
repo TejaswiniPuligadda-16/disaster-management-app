@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Disaster Management Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 min-h-screen font-sans">
+
+  <!-- 🔊 Alert Sound -->
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+
+  <!-- Navbar -->
+  <nav class="bg-sky-700 text-white p-4 flex justify-between items-center shadow-md">
+    <h1 class="text-xl font-bold">🌐 Disaster Management</h1>
+    <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+  </nav>
+
+  <!-- Dashboard Grid -->
+  <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto mt-8">
+    <!-- Timely Alerts -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg">
+      <img src="https://cdn-icons-png.flaticon.com/512/565/565547.png" alt="Alerts" class="w-full h-40 object-contain p-4" />
+      <div class="p-5 text-center">
+        <h2 class="text-lg font-semibold mb-2">📢 Timely Alerts</h2>
+        <div id="alerts" class="text-sm space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- SOS -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg text-center">
+      <img src="https://cdn-icons-png.flaticon.com/512/5971/5971930.png" alt="SOS" class="w-full h-40 object-contain p-4" />
+      <div class="p-5">
+        <h2 class="text-lg font-semibold mb-4">🚨 Emergency SOS</h2>
+        <button id="sosBtn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+          Send SOS
+        </button>
+      </div>
+    </div>
+
+    <!-- Resources -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg text-center">
+      <img src="https://cdn-icons-png.flaticon.com/512/3917/3917032.png" alt="Resources" class="w-full h-40 object-contain p-4" />
+      <div class="p-5">
+        <h2 class="text-lg font-semibold mb-4">🏥 Disaster Relief Resources</h2>
+        <a href="resources.html" class="bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700">View Resources</a>
+      </div>
+    </div>
+
+    <!-- Offline Info -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg text-center">
+      <img src="https://cdn-icons-png.flaticon.com/512/10761/10761642.png" alt="Offline Info" class="w-full h-40 object-contain p-4" />
+      <div class="p-5">
+        <h2 class="text-lg font-semibold mb-4">📄 Offline Access</h2>
+        <a href="offline.html" class="bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700">Open Offline Info</a>
+      </div>
+    </div>
+
+    <!-- Report Issue (Full Width) -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg text-center md:col-span-2">
+      <img src="https://cdn-icons-png.flaticon.com/512/3985/3985564.png" alt="Report" class="w-full h-40 object-contain p-4" />
+      <div class="p-5">
+        <h2 class="text-lg font-semibold mb-4">📨 Report an Issue</h2>
+        <a href="report-issue.html" class="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700">Report Issue</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Alerts Loader -->
+  <script>
+    const alertsBox = document.getElementById("alerts");
+    firebase.database().ref("alerts").on("value", snapshot => {
+      const data = snapshot.val();
+      alertsBox.innerHTML = data
+        ? Object.values(data).map(msg => `
+            <div class="bg-red-100 text-red-700 p-2 px-4 rounded border border-red-300">
+              ⚠️ ${msg}
+            </div>`).join('')
+        : "<p class='text-gray-500'>No active alerts.</p>";
+    });
+  </script>
+
+  <!-- SOS Contact Modal -->
+<div id="sosContactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+  <div class="bg-white p-6 rounded-lg shadow-xl w-80">
+    <h2 class="text-xl font-bold mb-4">🚨 Emergency Contact</h2>
+    <div class="space-y-3">
+      <input id="sosName" type="text" placeholder="Your Name" class="w-full p-2 border rounded" required>
+      <input id="sosPhone" type="tel" placeholder="Phone Number" class="w-full p-2 border rounded" required>
+      <input id="sosMessage" type="text" placeholder="SOS Message" class="w-full p-2 border rounded" required> <!-- ✅ New field -->
+    </div>
+    <div class="flex justify-between mt-4">
+      <button onclick="closeContactModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+      <button onclick="submitSOS()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Send SOS</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- SOS Confirmation Modal -->
+  <div id="sosConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+      <h2 class="text-lg font-semibold mb-2 text-green-700">✅ SOS Submitted!</h2>
+      <p class="text-sm text-gray-600 mb-4">Your alert has been successfully recorded. Rescue teams will be alerted shortly.</p>
+      <button onclick="closeConfirmationModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">OK</button>
+    </div>
+  </div>
+</body>
+</html> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

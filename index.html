@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Disaster Help</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Fredoka One', cursive, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      text-align: center;
+    }
+
+    body::before {
+      content: "";
+      background: url('landing.png') no-repeat center center fixed;
+      background-size: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .title {
+      font-size: 2.5em;
+      color: #130644;
+      margin-bottom: 40px;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+    }
+
+    .help-button {
+      font-size: 1.5em;
+      background-color: rgba(93, 89, 89, 0.332);
+      color: #130644;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      text-decoration: none;
+    }
+
+    .help-button:hover {
+      background-color: rgb(226, 217, 226);
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(() => console.log("✅ Service Worker Registered"))
+      .catch(err => console.error("❌ SW Error:", err));
+  }
+</script>
+</head>
+<body>
+  <div class="title">Emergency Disaster Response Hub</div>
+  <a href="landing.html" class="help-button">Get Help Now</a>
+</body>
+</html>
+
+
+
+
+
+
+
+

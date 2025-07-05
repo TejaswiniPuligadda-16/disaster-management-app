@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Submitted Issues - Admin View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-violet-100 to-purple-200 min-h-screen p-6 font-sans">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-purple-700">📬 Submitted Issues</h1>
+    <a href="admin.html" class="text-purple-600 hover:underline">← Back to Admin Dashboard</a>
+  </div>
+
+  <!-- Issues List -->
+  <div id="issuesList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <!-- Issues will be dynamically inserted here -->
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+  <!-- Firebase Config & Script -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPr8Aljbn8e8Q3SHsyqgf4LjAjAM9MrK8",
+      authDomain: "disaster-management-50465.firebaseapp.com",
+      databaseURL: "https://disaster-management-50465-default-rtdb.firebaseio.com",
+      projectId: "disaster-management-50465",
+      storageBucket: "disaster-management-50465.appspot.com",
+      messagingSenderId: "1022358263574",
+      appId: "1:1022358263574:web:3638027e128a12c0bc2237"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const issuesList = document.getElementById("issuesList");
+
+    db.ref("issues").on("value", snapshot => {
+      const data = snapshot.val();
+      issuesList.innerHTML = "";
+
+      if (data) {
+        Object.entries(data).reverse().forEach(([id, issue]) => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-lg shadow-md p-4";
+
+          card.innerHTML = `
+            <h3 class="text-lg font-semibold text-purple-800 mb-1">${issue.name}</h3>
+            <p class="text-sm text-gray-700"><strong>Email:</strong> ${issue.email}</p>
+            <p class="text-sm text-gray-700"><strong>Mobile:</strong> ${issue.mobile}</p>
+            <p class="text-sm text-gray-700"><strong>Address:</strong> ${issue.address}</p>
+            <p class="text-sm text-gray-700 mt-2"><strong>Issue:</strong> ${issue.message}</p>
+            ${issue.imageUrl ? `<img src="${issue.imageUrl}" alt="Uploaded Image" class="mt-3 rounded w-full h-48 object-cover">` : ''}
+          `;
+
+          issuesList.appendChild(card);
+        });
+      } else {
+        issuesList.innerHTML = `<p class="col-span-full text-center text-gray-500">No issues submitted yet.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

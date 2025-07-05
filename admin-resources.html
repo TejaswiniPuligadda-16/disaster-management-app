@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Manage Resources</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen p-6 font-sans">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-green-700">📦 Manage Disaster Relief Resources</h1>
+    <a href="admin.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+  </div>
+
+  <!-- Resource Cards Container -->
+  <div id="resourceList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-10"></div>
+
+  <!-- Add / Edit Form -->
+  <div class="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+    <h2 id="formTitle" class="text-xl font-bold mb-4 text-green-700">➕ Add New Resource</h2>
+    <input id="resourceName" type="text" placeholder="Resource Name" class="w-full border p-2 rounded mb-3" />
+    <input id="resourceDesc" type="text" placeholder="Description / Facilities" class="w-full border p-2 rounded mb-3" />
+    <input id="resourceCap" type="text" placeholder="Capacity / Quantity Info" class="w-full border p-2 rounded mb-3" />
+    <input id="resourceAddress" type="text" placeholder="Location / Address" class="w-full border p-2 rounded mb-3" />
+    <input id="resourceImage" type="url" placeholder="Image URL (optional)" class="w-full border p-2 rounded mb-4" />
+    <button id="submitBtn" onclick="submitResource()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Add Resource</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPr8Aljbn8e8Q3SHsyqgf4LjAjAM9MrK8",
+      authDomain: "disaster-management-50465.firebaseapp.com",
+      databaseURL: "https://disaster-management-50465-default-rtdb.firebaseio.com",
+      projectId: "disaster-management-50465",
+      storageBucket: "disaster-management-50465.appspot.com",
+      messagingSenderId: "1022358263574",
+      appId: "1:1022358263574:web:3638027e128a12c0bc2237"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const resourceRef = db.ref("resources");
+
+    const list = document.getElementById("resourceList");
+    const nameInput = document.getElementById("resourceName");
+    const descInput = document.getElementById("resourceDesc");
+    const capInput = document.getElementById("resourceCap");
+    const addrInput = document.getElementById("resourceAddress");
+    const imgInput = document.getElementById("resourceImage");
+    const submitBtn = document.getElementById("submitBtn");
+    const formTitle = document.getElementById("formTitle");
+
+    let editKey = null;
+
+    function renderResources(snapshot) {
+      const data = snapshot.val();
+      list.innerHTML = "";
+
+      if (!data) {
+        list.innerHTML = "<p class='text-gray-500 col-span-full text-center'>No resources found.</p>";
+        return;
+      }
+
+      Object.entries(data).reverse().forEach(([key, res]) => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-lg shadow-md";
+
+        card.innerHTML = `
+          <img src="${res.image || 'https://via.placeholder.com/400x200?text=No+Image'}" alt="Resource" class="rounded-md h-36 w-full object-cover mb-3">
+          <h3 class="text-lg font-semibold text-blue-700">${res.name}</h3>
+          <p class="text-sm text-gray-600 mb-1"><strong>📍 Location:</strong> ${res.address || 'Not specified'}</p>
+          <p class="text-sm text-gray-600">${res.description}</p>
+          <p class="text-sm text-gray-600 mb-2">${res.capacity}</p>
+          <div class="flex space-x-2">
+            <button onclick="editResource('${key}')" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm">Edit</button>
+            <button onclick="deleteResource('${key}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Delete</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function submitResource() {
+      const name = nameInput.value.trim();
+      const desc = descInput.value.trim();
+      const cap = capInput.value.trim();
+      const addr = addrInput.value.trim();
+      const img = imgInput.value.trim();
+
+      if (!name || !desc || !cap || !addr) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      const resource = {
+        name,
+        description: desc,
+        capacity: cap,
+        address: addr,
+        image: img,
+        time: new Date().toLocaleString()
+      };
+
+      if (editKey) {
+        resourceRef.child(editKey).set(resource);
+        submitBtn.textContent = "Add Resource";
+        formTitle.textContent = "➕ Add New Resource";
+        editKey = null;
+      } else {
+        resourceRef.push(resource);
+      }
+
+      nameInput.value = "";
+      descInput.value = "";
+      capInput.value = "";
+      addrInput.value = "";
+      imgInput.value = "";
+    }
+
+    function editResource(key) {
+      resourceRef.child(key).once("value").then(snapshot => {
+        const res = snapshot.val();
+        nameInput.value = res.name || "";
+        descInput.value = res.description || "";
+        capInput.value = res.capacity || "";
+        addrInput.value = res.address || "";
+        imgInput.value = res.image || "";
+
+        submitBtn.textContent = "Update Resource";
+        formTitle.textContent = "✏️ Edit Resource";
+        editKey = key;
+
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      });
+    }
+
+    function deleteResource(key) {
+      if (confirm("Are you sure you want to delete this resource?")) {
+        resourceRef.child(key).remove();
+      }
+    }
+
+    resourceRef.on("value", renderResources);
+  </script>
+</body>
+</html>
+
+
+
+
+
+

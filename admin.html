@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-white min-h-screen font-sans p-6">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-blue-800">🛠️ Admin Dashboard</h1>
+    <button onclick="logoutAdmin()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Logout</button>
+  </div>
+
+  <!-- Top Buttons -->
+  <div class="flex flex-wrap gap-4 justify-end mb-6">
+    <a href="admin-resources.html" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">➕ Manage Resources</a>
+    <a href="admin-issues.html" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">📝 View Submitted Issues</a>
+  </div>
+
+  <!-- Broadcast Alert -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-8 max-w-3xl mx-auto">
+    <h3 class="text-xl font-semibold text-blue-700 mb-3">📢 Broadcast Alert</h3>
+    <textarea id="alertMessage" rows="3" class="w-full border border-gray-300 p-3 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter alert message..."></textarea>
+    <button onclick="broadcastAlert()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Send Alert</button>
+    <div id="broadcastedAlerts" class="mt-6 space-y-3">
+  <!-- Alerts will be listed here -->
+</div>
+  </div>
+
+  <!-- SOS Alerts -->
+  <div class="bg-white rounded-lg shadow-md p-6 max-w-5xl mx-auto">
+    <h2 class="text-xl font-semibold text-center text-red-600 mb-4">🚨 Live SOS Alerts</h2>
+    <div id="sosList" class="space-y-6"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    if (localStorage.getItem("adminLoggedIn") !== "true") {
+      alert("Access denied. Please login as admin.");
+      window.location.href = "admin-login.html";
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPr8Aljbn8e8Q3SHsyqgf4LjAjAM9MrK8",
+      authDomain: "disaster-management-50465.firebaseapp.com",
+      databaseURL: "https://disaster-management-50465-default-rtdb.firebaseio.com",
+      projectId: "disaster-management-50465",
+      storageBucket: "disaster-management-50465.appspot.com",
+      messagingSenderId: "1022358263574",
+      appId: "1:1022358263574:web:3638027e128a12c0bc2237"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const sosRef = db.ref("sosAlerts");
+    const listDiv = document.getElementById("sosList");
+
+    // Fetch data and track used teams
+    sosRef.on("value", snapshot => {
+      const data = snapshot.val();
+      listDiv.innerHTML = "";
+
+      const assignedTeams = new Set();
+      if (data) {
+        Object.values(data).forEach(entry => {
+          if (entry.assignedTeam) assignedTeams.add(entry.assignedTeam);
+        });
+      }
+
+      Object.entries(data || {}).reverse().forEach(([id, entry]) => {
+        const div = document.createElement("div");
+        div.className = "bg-gray-50 border border-gray-300 p-4 rounded shadow-md";
+
+        let locationHTML = "Not available", mapEmbed = "";
+        if (entry.location?.startsWith("Lat:") && entry.location.includes("Lng:")) {
+          const lat = entry.location.split("Lat:")[1].split(",")[0].trim();
+          const lng = entry.location.split("Lng:")[1].trim();
+          locationHTML = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="text-blue-600 underline">Lat: ${lat}, Lng: ${lng}</a>`;
+          mapEmbed = `<div class="mt-2"><iframe width="100%" height="200" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed" allowfullscreen></iframe></div>`;
+        }
+
+        const isResolved = entry.status === "resolved";
+        const teams = Array.from({ length: 10 }, (_, i) => `Team ${i + 1}`);
+        const availableTeams = teams.filter(team => !assignedTeams.has(team));
+
+        const statusSection = isResolved
+          ? `<p class="text-green-600 mt-2">✅ Resolved</p>`
+          : entry.assignedTeam
+            ? `<p class="text-green-600 font-medium mt-2">✅ Team Assigned: ${entry.assignedTeam}</p>
+               <button onclick="markResolved('${id}', '${entry.assignedTeam}')" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700">Mark as Resolved</button>`
+            : `<select id="team-${id}" class="border border-gray-300 px-2 py-1 rounded mt-2">
+                <option disabled selected>Choose Team</option>
+                ${availableTeams.map(team => `<option value="${team}">${team}</option>`).join('')}
+               </select>
+               <button onclick="confirmAndAssignTeam('${id}')" class="ml-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 mt-2">Confirm & Assign</button>`;
+
+        div.innerHTML = `
+          <p><strong>Name:</strong> ${entry.name || "Not provided"}</p>
+          <p><strong>Phone:</strong> ${entry.phone || "Not provided"}</p>
+          <p><strong>Email:</strong> ${entry.email}</p>
+          <p><strong>Time:</strong> ${entry.time}</p>
+          <p><strong>Location:</strong> ${locationHTML}</p>
+          ${mapEmbed}
+          ${statusSection}
+        `;
+        listDiv.appendChild(div);
+      });
+    });
+
+    function confirmAndAssignTeam(alertId) {
+      const teamSelect = document.getElementById(`team-${alertId}`);
+      const selectedTeam = teamSelect?.value;
+      if (!selectedTeam) {
+        alert("Please select a team before confirming.");
+        return;
+      }
+
+      db.ref(`sosAlerts/${alertId}`).update({
+        assignedTeam: selectedTeam
+      }).then(() => {
+        alert("🚑 Team assigned successfully!");
+      }).catch(err => {
+        alert("❌ Failed to assign team: " + err.message);
+      });
+    }
+
+    function markResolved(alertId, team) {
+      db.ref(`sosAlerts/${alertId}`).update({
+        status: "resolved",
+        assignedTeam: null
+      }).then(() => {
+        alert(`✅ Marked as resolved. ${team} is now available.`);
+      }).catch(err => {
+        alert("❌ Failed to update status: " + err.message);
+      });
+    }
+
+    function broadcastAlert() {
+      const alertMsg = document.getElementById("alertMessage").value.trim();
+      if (!alertMsg) {
+        alert("Please enter an alert message.");
+        return;
+      }
+
+      db.ref("alerts").push(alertMsg)
+        .then(() => {
+          alert("✅ Alert broadcasted successfully!");
+          document.getElementById("alertMessage").value = "";
+        })
+        .catch(err => {
+          alert("❌ Failed to send alert: " + err.message);
+        });
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem("adminLoggedIn");
+      window.location.href = "admin-login.html";
+    }
+  </script>
+  <script>
+  // Broadcast a new alert
+  function broadcastAlert() {
+    const alertMsg = document.getElementById("alertMessage").value.trim();
+    if (!alertMsg) {
+      alert("Please enter an alert message.");
+      return;
+    }
+
+    db.ref("alerts").push(alertMsg)
+      .then(() => {
+        alert("✅ Alert broadcasted successfully!");
+        document.getElementById("alertMessage").value = "";
+        loadBroadcastedAlerts(); // reload the alert list
+      })
+      .catch(err => {
+        alert("❌ Failed to send alert: " + err.message);
+      });
+  }
+
+  // Load alerts with Edit/Delete options
+  function loadBroadcastedAlerts() {
+    const alertContainer = document.getElementById("broadcastedAlerts");
+    db.ref("alerts").once("value")
+      .then(snapshot => {
+        const data = snapshot.val();
+        alertContainer.innerHTML = "";
+
+        if (data) {
+          Object.entries(data).reverse().forEach(([id, msg]) => {
+            const div = document.createElement("div");
+            div.className = "bg-blue-50 border border-blue-300 p-3 rounded flex justify-between items-center";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = msg;
+            input.disabled = true;
+            input.className = "bg-transparent flex-grow mr-4 px-2";
+
+            const editBtn = document.createElement("button");
+            editBtn.innerText = "✏️";
+            editBtn.className = "text-yellow-600 mr-2 hover:underline";
+            editBtn.onclick = () => {
+              if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                editBtn.innerText = "💾";
+              } else {
+                db.ref("alerts/" + id).set(input.value)
+                  .then(() => {
+                    input.disabled = true;
+                    editBtn.innerText = "✏️";
+                    alert("✅ Alert updated.");
+                  })
+                  .catch(err => alert("❌ Failed to update alert: " + err.message));
+              }
+            };
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerText = "🗑️";
+            deleteBtn.className = "text-red-600 hover:underline";
+            deleteBtn.onclick = () => {
+              if (confirm("Are you sure you want to delete this alert?")) {
+                db.ref("alerts/" + id).remove()
+                  .then(() => {
+                    alert("🗑️ Alert deleted.");
+                    loadBroadcastedAlerts();
+                  })
+                  .catch(err => alert("❌ Failed to delete alert: " + err.message));
+              }
+            };
+
+            div.appendChild(input);
+            div.appendChild(editBtn);
+            div.appendChild(deleteBtn);
+            alertContainer.appendChild(div);
+          });
+        } else {
+          alertContainer.innerHTML = "<p class='text-gray-500 text-sm'>No alerts available.</p>";
+        }
+      });
+  }
+
+  // Load alerts on page load
+  window.onload = function () {
+    loadBroadcastedAlerts();
+  };
+</script>
+</body>
+</html> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      

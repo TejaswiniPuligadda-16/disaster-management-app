@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Available Resources</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen p-6 font-sans">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-blue-700">🛖 Available Relief Resources</h1>
+    <a href="dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+  </div>
+
+  <!-- Resource List -->
+  <div id="resourceList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <!-- Dynamic resources will be injected here -->
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <!-- Firebase Config & Resource Loader -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPr8Aljbn8e8Q3SHsyqgf4LjAjAM9MrK8",
+      authDomain: "disaster-management-50465.firebaseapp.com",
+      databaseURL: "https://disaster-management-50465-default-rtdb.firebaseio.com",
+      projectId: "disaster-management-50465",
+      storageBucket: "disaster-management-50465.appspot.com",
+      messagingSenderId: "1022358263574",
+      appId: "1:1022358263574:web:3638027e128a12c0bc2237"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const resourceList = document.getElementById("resourceList");
+
+    db.ref("resources").on("value", snapshot => {
+      const data = snapshot.val();
+      resourceList.innerHTML = "";
+
+      if (data) {
+        Object.entries(data).reverse().forEach(([id, res]) => {
+          const div = document.createElement("div");
+          div.className = "bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition";
+
+          div.innerHTML = `
+            <img src="${res.image || 'https://via.placeholder.com/500x200?text=No+Image'}"
+                 alt="${res.name}"
+                 class="rounded-md h-36 w-full object-cover mb-3" />
+            <h3 class="text-lg font-semibold text-blue-700">${res.name}</h3>
+            <p class="text-sm text-gray-600 mt-1">${res.description}</p>
+            <p class="text-sm text-gray-600">${res.capacity}</p>
+            <p class="text-sm text-gray-600"><strong>📍 Location:</strong> ${res.address || 'Not specified'}</p>
+          `;
+
+          resourceList.appendChild(div);
+        });
+      } else {
+        resourceList.innerHTML = "<p class='text-gray-500 col-span-full text-center'>No resources available at the moment.</p>";
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
